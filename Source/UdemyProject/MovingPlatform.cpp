@@ -19,17 +19,42 @@ void AMovingPlatform::BeginPlay()
 		SetReplicateMovement(true);
 	}
 	
+	GlobalStartLocation = GetActorLocation();
+	GlobalTargetLocation = GetTransform().TransformPosition(TargetLocation);
 }
 
 void AMovingPlatform::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if (HasAuthority()) {
-		FVector Location = GetActorLocation();
-		Location += FVector(Speed * DeltaTime, 0, 0);
+	if (ActiveTrigger > 0) {
+		if (HasAuthority()) {
+			FVector Location = GetActorLocation();
+			float JourneyLength = (GlobalTargetLocation - GlobalStartLocation).Size();
+			float JourneyTravelled = (Location - GlobalStartLocation).Size();
 
-		SetActorLocation(Location);
+			if (JourneyTravelled >= JourneyLength) {
+				FVector Swap = GlobalStartLocation;
+				GlobalStartLocation = GlobalTargetLocation;
+				GlobalTargetLocation = Swap;
+			}
+			// 정규화된 벡터를 유지시킴
+			FVector Direction = (GlobalTargetLocation - GlobalStartLocation).GetSafeNormal();
+			Location += Speed * DeltaTime * Direction;
+
+			SetActorLocation(Location);
+		}
 	}
 }
 
+void AMovingPlatform::AddActiveTrigger()
+{
+	ActiveTrigger++;
+}
+
+void AMovingPlatform::RemoveActiveTrigger()
+{
+	if (ActiveTrigger > 0) {
+		ActiveTrigger--;
+	}
+}

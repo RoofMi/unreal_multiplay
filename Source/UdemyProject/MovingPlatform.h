@@ -21,6 +21,19 @@ public:
 
 	virtual void Tick(float DeltaTime) override;
 
-	UPROPERTY(EditAnywhere, Category = "Test")
+	UPROPERTY(EditAnywhere, Category = "Moving")
 	float Speed = 20;
+
+	UPROPERTY(EditAnywhere, Category = "Moving", Meta = (MakeEditWidget = true))
+	FVector TargetLocation;
+
+	void AddActiveTrigger();
+	void RemoveActiveTrigger();
+
+private:
+	FVector GlobalTargetLocation;
+	FVector GlobalStartLocation;
+
+	UPROPERTY(EditAnywhere)
+	int8 ActiveTrigger = 1;
 };
