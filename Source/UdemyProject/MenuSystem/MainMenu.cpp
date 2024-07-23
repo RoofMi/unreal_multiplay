@@ -3,9 +3,23 @@
 
 #include "MainMenu.h"
 
+#include "UObject/ConstructorHelpers.h"
+
 #include "Components/Button.h"
 #include "Components/WidgetSwitcher.h"
 #include "Components/EditableTextBox.h"
+#include "Components/TextBlock.h"
+
+#include "ServerRow.h"
+
+UMainMenu::UMainMenu(const FObjectInitializer& ObjectInitializer)
+{
+	ConstructorHelpers::FClassFinder<UUserWidget> ServerRowBPClass(TEXT("/Game/Udemy/WBP_ServerRow"));
+	if (ServerRowBPClass.Class != nullptr)
+	{
+		ServerRowClass = ServerRowBPClass.Class;
+	}
+}
 
 bool UMainMenu::Initialize()
 {
@@ -34,54 +48,12 @@ bool UMainMenu::Initialize()
 
 	ConfirmJoinMenuButton->OnClicked.AddDynamic(this, &UMainMenu::JoinServer);
 
+	if (!ensure(ExitButton != nullptr))
+		return false;
+
+	ExitButton->OnClicked.AddDynamic(this, &UMainMenu::ExitPressed);
+
 	return true;
-}
-
-void UMainMenu::SetMenuInterface(IMenuInterface* IMenuInterface)
-{
-	MenuInterface = IMenuInterface;
-}
-
-void UMainMenu::Setup()
-{
-	this->AddToViewport();
-
-	UWorld* World = GetWorld();
-	if (!ensure(World != nullptr))
-		return;
-
-	APlayerController* PlayerController = World->GetFirstPlayerController();
-
-	if (!ensure(PlayerController != nullptr))
-		return;
-
-	FInputModeUIOnly InputModeData;
-	InputModeData.SetWidgetToFocus(this->TakeWidget());
-	InputModeData.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
-
-	PlayerController->SetInputMode(InputModeData);
-
-	PlayerController->bShowMouseCursor = true;
-}
-
-void UMainMenu::Teardown()
-{
-	this->RemoveFromViewport();
-
-	UWorld* World = GetWorld();
-	if (!ensure(World != nullptr))
-		return;
-
-	APlayerController* PlayerController = World->GetFirstPlayerController();
-
-	if (!ensure(PlayerController != nullptr))
-		return;
-
-	FInputModeGameOnly InputModeData;
-
-	PlayerController->SetInputMode(InputModeData);
-
-	PlayerController->bShowMouseCursor = false;
 }
 
 void UMainMenu::HostServer()
@@ -92,15 +64,41 @@ void UMainMenu::HostServer()
 	}
 }
 
-void UMainMenu::JoinServer()
+void UMainMenu::SetServerList(TArray<FString> ServerName)
 {
-	if (MenuInterface != nullptr)
+	ServerList->ClearChildren();
+
+	uint32 i = 0;
+	for (const FString& ServerName : ServerName)
 	{
-		if (!ensure(IPAddressField != nullptr))
+		UServerRow* ServerRow = CreateWidget<UServerRow>(this, ServerRowClass);
+
+		if (!ensure(ServerRow != nullptr))
 			return;
 
-		const FString& Address = IPAddressField->GetText().ToString();
-		MenuInterface->Join(Address);
+		ServerRow->ServerName->SetText(FText::FromString(ServerName));
+		ServerRow->Setup(this, i);
+		++i;
+
+		ServerList->AddChild(ServerRow);
+	}
+}
+
+void UMainMenu::SelectIndex(uint32 Index)
+{
+	SelectedIndex = Index;
+}
+
+void UMainMenu::JoinServer()
+{
+	if (SelectedIndex.IsSet() && MenuInterface != nullptr)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Selected Index %d."), SelectedIndex.GetValue());
+		MenuInterface->Join(SelectedIndex.GetValue());
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Selected Index not set."));
 	}
 }
 
@@ -114,6 +112,10 @@ void UMainMenu::OpenJoinMenu()
 		return;
 
 	MenuSwitcher->SetActiveWidget(JoinMenu);
+	if (MenuInterface != nullptr)
+	{
+		MenuInterface->RefreshServerList();
+	}
 }
 
 void UMainMenu::OpenMainMenu()
@@ -125,4 +127,18 @@ void UMainMenu::OpenMainMenu()
 		return;
 
 	MenuSwitcher->SetActiveWidget(MainMenu);
+}
+
+void UMainMenu::ExitPressed()
+{
+	UWorld* World = GetWorld();
+	if (!ensure(World != nullptr))
+		return;
+
+	APlayerController* PlayerController = World->GetFirstPlayerController();
+
+	if (!ensure(PlayerController != nullptr))
+		return;
+
+	PlayerController->ConsoleCommand("quit");
 }

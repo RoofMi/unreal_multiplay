@@ -3,15 +3,30 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Blueprint/UserWidget.h"
+#include "MenuWidget.h"
 #include "InGameMenu.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class UDEMYPROJECT_API UInGameMenu : public UUserWidget
+class UDEMYPROJECT_API UInGameMenu : public UMenuWidget
 {
 	GENERATED_BODY()
+
+protected:
+	virtual bool Initialize();
 	
+private:
+	UPROPERTY(meta = (BindWidget))
+	class UButton* QuitButton;
+
+	UPROPERTY(meta = (BindWidget))
+	class UButton* CancelButton;
+
+	UFUNCTION()
+	void QuitPressed();
+
+	UFUNCTION()
+	void CancelPressed();
 };
