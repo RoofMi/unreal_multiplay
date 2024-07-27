@@ -31,7 +31,17 @@ bool UMainMenu::Initialize()
 	if (!ensure(HostButton != nullptr))
 		return false;
 
-	HostButton->OnClicked.AddDynamic(this, &UMainMenu::HostServer);
+	HostButton->OnClicked.AddDynamic(this, &UMainMenu::OpenHostMenu);
+
+	if (!ensure(CancelHostMenuButton != nullptr))
+		return false;
+
+	CancelHostMenuButton->OnClicked.AddDynamic(this, &UMainMenu::OpenMainMenu);
+
+	if (!ensure(ConfirmHostMenuButton != nullptr))
+		return false;
+
+	ConfirmHostMenuButton->OnClicked.AddDynamic(this, &UMainMenu::HostServer);
 
 	if (!ensure(JoinButton != nullptr))
 		return false;
@@ -56,27 +66,37 @@ bool UMainMenu::Initialize()
 	return true;
 }
 
+void UMainMenu::OpenHostMenu()
+{
+	MenuSwitcher->SetActiveWidget(HostMenu);
+}
+
 void UMainMenu::HostServer()
 {
 	if (MenuInterface != nullptr)
 	{
-		MenuInterface->Host();
+		FString ServerName = ServerHostName->Text.ToString();
+		MenuInterface->Host(ServerName);
 	}
 }
 
-void UMainMenu::SetServerList(TArray<FString> ServerName)
+void UMainMenu::SetServerList(TArray<FServerData> ServerName)
 {
 	ServerList->ClearChildren();
 
 	uint32 i = 0;
-	for (const FString& ServerName : ServerName)
+	for (const FServerData& ServerData : ServerName)
 	{
 		UServerRow* ServerRow = CreateWidget<UServerRow>(this, ServerRowClass);
 
 		if (!ensure(ServerRow != nullptr))
 			return;
 
-		ServerRow->ServerName->SetText(FText::FromString(ServerName));
+		ServerRow->ServerName->SetText(FText::FromString(ServerData.Name));
+		ServerRow->HostUser->SetText(FText::FromString(ServerData.HostUserName));
+		
+		FString FractionText = FString::Printf(TEXT("%d/%d"), ServerData.CurrentPlayers, ServerData.MaxPlayers);
+		ServerRow->ConnectionFraction->SetText(FText::FromString(FractionText));
 		ServerRow->Setup(this, i);
 		++i;
 
@@ -87,6 +107,19 @@ void UMainMenu::SetServerList(TArray<FString> ServerName)
 void UMainMenu::SelectIndex(uint32 Index)
 {
 	SelectedIndex = Index;
+	UpdateChildren();
+}
+
+void UMainMenu::UpdateChildren()
+{
+	for (int32 i = 0; i < ServerList->GetChildrenCount(); i++)
+	{
+		auto Row = Cast<UServerRow>(ServerList->GetChildAt(i));
+		if (Row != nullptr)
+		{
+			Row->Selected = (SelectedIndex.IsSet() && SelectedIndex.GetValue() == i);
+		}
+	}
 }
 
 void UMainMenu::JoinServer()

@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Engine/GameInstance.h"
-#include "MenuSystem//MenuInterface.h"
+#include "MenuSystem/MenuInterface.h"
 #include "OnlineSubsystem.h"
 #include "Interfaces/OnlineSessionInterface.h"
 #include "UdemyPlatformGameInstance.generated.h"
@@ -29,10 +29,12 @@ public:
 	void InGameLoadMenu();
 	
 	UFUNCTION(Exec)
-	void Host() override;
+	void Host(FString ServerName) override;
 
 	UFUNCTION(Exec)
 	void Join(uint32 Index) override;
+
+	void StartSession();
 
 	virtual void LoadMainMenu() override;
 
@@ -51,6 +53,8 @@ private:
 	void OnDestroySessionComplete(FName SessionName, bool Success);
 	void OnFindSessionComplete(bool Success);
 	void OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result);
+	void OnNetworkFailure(UWorld* World, UNetDriver* NetDriver, ENetworkFailure::Type FailureType, const FString& ErrorString);
 
+	FString DesiredServerName;
 	void CreateSession();
 };
