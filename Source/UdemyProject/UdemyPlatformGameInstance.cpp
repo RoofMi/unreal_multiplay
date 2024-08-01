@@ -54,6 +54,7 @@ void UUdemyPlatformGameInstance::Init()
 
 	if (GEngine != nullptr)
 	{
+		// HOST가 끊겼을 시 실행됨.
 		GEngine->OnNetworkFailure().AddUObject(this, &UUdemyPlatformGameInstance::OnNetworkFailure);
 	}
 }
@@ -69,6 +70,7 @@ void UUdemyPlatformGameInstance::LoadMenu()
 	Menu->SetMenuInterface(this);
 }
 
+// 숫자키 1번 누르면 인게임 메뉴 실행됨
 void UUdemyPlatformGameInstance::InGameLoadMenu()
 {
 	UMenuWidget* InGameMenu = CreateWidget<UMenuWidget>(this, InGameMenuClass);
@@ -82,10 +84,12 @@ void UUdemyPlatformGameInstance::InGameLoadMenu()
 
 void UUdemyPlatformGameInstance::Host(FString ServerName)
 {
+	// 호스트 이름 정하기
 	DesiredServerName = ServerName;
 
 	if (SessionInterface.IsValid())
 	{
+		// 이미 세션이 생성되어 있는지 확인
 		auto ExistingSession = SessionInterface->GetNamedSession(SESSION_NAME);
 		if (ExistingSession != nullptr)
 		{
@@ -115,8 +119,9 @@ void UUdemyPlatformGameInstance::OnCreateSessionComplete(FName SessionName, bool
 
 	UWorld* World = GetWorld();
 
+	// 로비로 맵 이동
 	if (World != nullptr) {
-		World->ServerTravel("/Game/ThirdPerson/Maps/Lobby?listen");
+		World->ServerTravel("/Game/Udemy/Lobby?listen");
 	}
 }
 
@@ -168,6 +173,7 @@ void UUdemyPlatformGameInstance::OnFindSessionComplete(bool Success)
 {
 	if (Success && SessionSearch.IsValid() && Menu != nullptr)
 	{
+		// 서버 목록들을 넣어서 저장하는 리스트 변수
 		TArray<FServerData> ServerNames;
 
 		for (const FOnlineSessionSearchResult& SearchResult : SessionSearch->SearchResults)

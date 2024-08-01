@@ -5,6 +5,17 @@
 #include "TimerManager.h"
 #include "UdemyPlatformGameInstance.h"
 
+ALobbyGameMode::ALobbyGameMode()
+{
+	// set default pawn class to our Blueprinted character
+	static ConstructorHelpers::FClassFinder<APawn> PlayerPawnBPClass(TEXT("/Game/Udemy/Character/BP_UdemyCharacter"));
+	if (PlayerPawnBPClass.Class != NULL)
+	{
+		DefaultPawnClass = PlayerPawnBPClass.Class;
+	}
+}
+
+
 void ALobbyGameMode::PostLogin(APlayerController* NewPlayer)
 {
 	Super::PostLogin(NewPlayer);
@@ -13,7 +24,7 @@ void ALobbyGameMode::PostLogin(APlayerController* NewPlayer)
 
 	if (NumberOfPlayers >= 2)
 	{
-		GetWorldTimerManager().SetTimer(GameStartTimer, this, &ALobbyGameMode::StartGame, 10);
+		GetWorldTimerManager().SetTimer(GameStartTimer, this, &ALobbyGameMode::StartGame, 20);
 	}
 }
 

@@ -16,6 +16,8 @@ class UDEMYPROJECT_API ALobbyGameMode : public AUdemyProjectGameMode
 
 public:
 
+	ALobbyGameMode();
+
 	void PostLogin(APlayerController* NewPlayer) override;
 
 	void Logout(AController* Exiting) override;
